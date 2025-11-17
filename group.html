@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Study Group</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4BA7A8 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+        }
+
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .group-info {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .group-info h2 {
+            color: #4BA7A8;
+            margin-bottom: 10px;
+        }
+
+        .group-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .stat {
+            flex: 1;
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #4BA7A8;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .full-width-card {
+            grid-column: 1 / -1;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h3::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #4BA7A8 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .member-list {
+            list-style: none;
+        }
+
+        .member-item {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .member-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .member-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .member-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid #4BA7A8;
+            background: white;
+        }
+
+        .member-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .member-info h4 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 4px;
+        }
+
+        .member-info p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .mentor-badge {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #333;
+            padding: 6px 14px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .member-goals {
+            color: #555;
+            font-style: italic;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e0e0e0;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .help-section {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .help-section h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .help-section p {
+            color: #856404;
+            line-height: 1.5;
+        }
+
+        .help-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .help-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .resource-item {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .resource-info h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .resource-info p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .resource-link {
+            color: #4BA7A8;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .resource-link:hover {
+            text-decoration: underline;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        /* Chat Styles */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #FFF4E0;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .chat-message {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .chat-message.own-message {
+            background: linear-gradient(135deg, #4BA7A8 0%, #5DBEC0 100%);
+            color: white;
+            margin-left: 40px;
+        }
+
+        .chat-message.own-message .message-author {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .chat-message.own-message .message-time {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #4BA7A8;
+            background: white;
+        }
+
+        .message-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .message-author {
+            font-weight: 600;
+            color: #003D5C;
+            font-size: 14px;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #999;
+            margin-left: auto;
+        }
+
+        .message-text {
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .chat-message.own-message .message-text {
+            color: white;
+        }
+
+        .chat-input-area {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #4BA7A8;
+        }
+
+        .send-button {
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #FF8E53 0%, #FFA866 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(255, 142, 83, 0.3);
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 142, 83, 0.4);
+        }
+
+        .send-button:active {
+            transform: translateY(0);
+        }
+
+        .chat-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+        }
+
+        .chat-empty-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        /* Feedback Section */
+        .feedback-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .feedback-title {
+            text-align: center;
+            color: #003D5C;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .feedback-subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+
+        .star-rating {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .star {
+            font-size: 40px;
+            cursor: pointer;
+            color: #ddd;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .star:hover,
+        .star.active {
+            color: #FFD700;
+            transform: scale(1.15);
+        }
+
+        .rating-label {
+            text-align: center;
+            color: #FF8E53;
+            font-weight: 600;
+            margin-bottom: 20px;
+            font-size: 16px;
+            min-height: 24px;
+        }
+
+        .feedback-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+            margin-bottom: 15px;
+        }
+
+        .feedback-textarea:focus {
+            outline: none;
+            border-color: #4BA7A8;
+        }
+
+        .feedback-submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #FF8E53 0%, #FFA866 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(255, 142, 83, 0.3);
+        }
+
+        .feedback-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 142, 83, 0.4);
+        }
+
+        .feedback-submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .feedback-success {
+            text-align: center;
+            padding: 30px;
+            display: none;
+        }
+
+        .feedback-success.show {
+            display: block;
+        }
+
+        .feedback-success-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .feedback-error {
+            background: #ffe0e0;
+            color: #cc0000;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            display: none;
+        }
+
+        .feedback-error.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1 id="groupTitle">Study Group</h1>
+            <a href="#" class="back-btn" onclick="goBackToDashboard()">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="group-info">
+            <h2>Group Information</h2>
+            <p id="groupDescription"></p>
+            <div class="group-stats">
+                <div class="stat">
+                    <div class="stat-number" id="memberCount">0</div>
+                    <div class="stat-label">Members</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="levelDisplay">--</div>
+                    <div class="stat-label">Level</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="hasMentor">No</div>
+                    <div class="stat-label">Has Mentor</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Group Members</h3>
+                <div id="groupMembers"></div>
+            </div>
+
+            <div class="card">
+                <h3>Support & Resources</h3>
+
+                <div class="help-section">
+                    <h4>Need Help?</h4>
+                    <p>Use the group chat below to ask questions, share ideas, and support each other!</p>
+                </div>
+
+                <h4 style="margin-top: 25px; margin-bottom: 15px; color: #333;">Shared Resources</h4>
+                <div id="resourceList">
+                    <div class="empty-state">No shared resources yet. Your mentor will add helpful materials here.</div>
+                </div>
+            </div>
+
+            <div class="card full-width-card">
+                <h3>Group Chat</h3>
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="chat-empty">
+                            <div class="chat-empty-icon">💬</div>
+                            <p>No messages yet. Be the first to say hello!</p>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text"
+                               class="chat-input"
+                               id="chatInput"
+                               placeholder="Type your message here..."
+                               onkeypress="if(event.key === 'Enter') sendMessage()">
+                        <button class="send-button" onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+
+                <!-- Feedback Section -->
+                <div class="feedback-section">
+                    <h4 class="feedback-title">Rate My MVP</h4>
+                    <p class="feedback-subtitle">Help me improve this platform with your feedback!</p>
+
+                    <div id="feedbackFormArea">
+                        <div class="rating-label" id="ratingLabel"></div>
+
+                        <div class="star-rating" id="feedbackStarRating">
+                            <span class="star" data-rating="1">★</span>
+                            <span class="star" data-rating="2">★</span>
+                            <span class="star" data-rating="3">★</span>
+                            <span class="star" data-rating="4">★</span>
+                            <span class="star" data-rating="5">★</span>
+                        </div>
+
+                        <form id="feedbackForm" action="https://formsubmit.co/lucianadiasdemacedo@gmail.com" method="POST">
+                            <input type="hidden" name="_subject" value="New MVP Feedback from English Teachers Platform">
+                            <input type="hidden" name="_captcha" value="false">
+                            <input type="hidden" name="_template" value="table">
+                            <input type="hidden" name="rating" id="feedbackRatingInput" required>
+                            <input type="hidden" name="user_name" id="feedbackUserName">
+                            <input type="hidden" name="user_level" id="feedbackUserLevel">
+                            <input type="hidden" name="timestamp" id="feedbackTimestamp">
+
+                            <div class="feedback-error" id="feedbackError">
+                                Please select a star rating before submitting!
+                            </div>
+
+                            <textarea
+                                class="feedback-textarea"
+                                id="feedbackComments"
+                                name="comments"
+                                placeholder="Share your thoughts, suggestions, or what you liked... (optional)"></textarea>
+
+                            <button type="submit" class="feedback-submit-btn" id="feedbackSubmitBtn">
+                                Submit Feedback
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="feedback-success" id="feedbackSuccess">
+                        <div class="feedback-success-icon">🎉</div>
+                        <h3 style="color: #4BA7A8; margin-bottom: 10px;">Thank You!</h3>
+                        <p style="color: #666;">Your feedback has been submitted. I really appreciate your input!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Avatar list
+        const avatars = [
+            'avatar-blue-hair.png',
+            'avatar-colorful-hair.png',
+            'avatar-female-teacher.png',
+            'avatar-green-hair.png',
+            'avatar-orange.png',
+            'avatar-pink-hair.png',
+            'avatar-purple-hair.png',
+            'avatar-teacher-scarf.png',
+            'avatar-yellow-hair.png',
+            'avatar_gender-neutral.png',
+            'avatar_purple-hair.png',
+            'blue-avatar.png'
+        ];
+
+        // Get or assign avatar for a user
+        function getAvatar(userId) {
+            const avatarMap = JSON.parse(localStorage.getItem('userAvatars') || '{}');
+
+            if (!avatarMap[userId]) {
+                // Assign random avatar
+                avatarMap[userId] = avatars[Math.floor(Math.random() * avatars.length)];
+                localStorage.setItem('userAvatars', JSON.stringify(avatarMap));
+            }
+
+            return avatarMap[userId];
+        }
+
+        // Load user data
+        const userDataStr = localStorage.getItem('userData');
+        const userData = userDataStr ? JSON.parse(userDataStr) : {};
+
+        function loadGroupData() {
+            const groupsStr = localStorage.getItem('groups');
+            const groups = groupsStr ? JSON.parse(groupsStr) : [];
+
+            const userGroup = groups.find(g => g.groupId === userData.groupId);
+
+            if (!userGroup) {
+                document.getElementById('groupTitle').textContent = 'Group Not Found';
+                document.getElementById('groupDescription').textContent = 'You are not assigned to a group yet.';
+                return;
+            }
+
+            // Update group title and info
+            document.getElementById('groupTitle').textContent = `${userGroup.level} Study Group`;
+            document.getElementById('groupDescription').textContent =
+                `Welcome to your collaborative learning space! This is where you and your fellow teachers at the ${userGroup.level} level can learn together, share experiences, and support each other's growth.`;
+
+            // Update stats
+            const totalMembers = (userGroup.members?.length || 0) + (userGroup.mentor ? 1 : 0);
+            document.getElementById('memberCount').textContent = totalMembers;
+            document.getElementById('levelDisplay').textContent = userGroup.level;
+            document.getElementById('hasMentor').textContent = userGroup.mentor ? 'Yes' : 'No';
+
+            // Load members
+            loadGroupMembers(userGroup);
+        }
+
+        function loadGroupMembers(userGroup) {
+            const container = document.getElementById('groupMembers');
+            let html = '';
+
+            // Show mentor first
+            if (userGroup.mentor) {
+                html += `
+                    <div class="member-item">
+                        <div class="member-header">
+                            <div class="member-avatar">
+                                <img src="${getAvatar(userGroup.mentor.userId)}" alt="${userGroup.mentor.name}">
+                            </div>
+                            <div class="member-info">
+                                <h4>${userGroup.mentor.name} <span class="mentor-badge">MENTOR</span></h4>
+                                <p>Guiding and supporting the group</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Show all members
+            if (userGroup.members && userGroup.members.length > 0) {
+                html += userGroup.members.map(member => `
+                    <div class="member-item">
+                        <div class="member-header">
+                            <div class="member-avatar">
+                                <img src="${getAvatar(member.userId)}" alt="${member.name}">
+                            </div>
+                            <div class="member-info">
+                                <h4>${member.name}${member.userId === userData.userId ? ' (You)' : ''}</h4>
+                                <p>Group Member</p>
+                            </div>
+                        </div>
+                        ${member.goals ? `<div class="member-goals"><strong>Goals:</strong> ${member.goals}</div>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            if (html === '') {
+                html = '<div class="empty-state">No members yet. Check back soon!</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function goBackToDashboard() {
+            if (userData.isMentor) {
+                window.location.href = 'mentor-dashboard.html';
+            } else {
+                window.location.href = 'learner-dashboard.html';
+            }
+        }
+
+        // Chat functionality
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            const messageData = {
+                messageId: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                userId: userData.userId,
+                userName: userData.name,
+                text: message,
+                timestamp: new Date().toISOString(),
+                groupId: userData.groupId
+            };
+
+            // Save to localStorage
+            const messages = JSON.parse(localStorage.getItem('groupMessages_' + userData.groupId) || '[]');
+            messages.push(messageData);
+            localStorage.setItem('groupMessages_' + userData.groupId, JSON.stringify(messages));
+
+            // Clear input
+            input.value = '';
+
+            // Reload messages
+            loadMessages();
+
+            // Scroll to bottom
+            scrollToBottom();
+        }
+
+        function loadMessages() {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messages = JSON.parse(localStorage.getItem('groupMessages_' + userData.groupId) || '[]');
+
+            if (messages.length === 0) {
+                messagesContainer.innerHTML = `
+                    <div class="chat-empty">
+                        <div class="chat-empty-icon">💬</div>
+                        <p>No messages yet. Be the first to say hello!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Display messages
+            let html = '';
+            messages.forEach(msg => {
+                const isOwnMessage = msg.userId === userData.userId;
+                const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const avatar = getAvatar(msg.userId);
+
+                html += `
+                    <div class="chat-message ${isOwnMessage ? 'own-message' : ''}">
+                        <div class="message-header">
+                            ${!isOwnMessage ? `
+                                <div class="message-avatar">
+                                    <img src="${avatar}" alt="${msg.userName}">
+                                </div>
+                            ` : ''}
+                            <span class="message-author">${isOwnMessage ? 'You' : msg.userName}</span>
+                            <span class="message-time">${time}</span>
+                        </div>
+                        <div class="message-text">${escapeHtml(msg.text)}</div>
+                    </div>
+                `;
+            });
+
+            messagesContainer.innerHTML = html;
+        }
+
+        function scrollToBottom() {
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Auto-refresh messages every 3 seconds for "live" chat
+        setInterval(loadMessages, 3000);
+
+        // Feedback functionality
+        let feedbackRating = 0;
+        const feedbackStars = document.querySelectorAll('#feedbackStarRating .star');
+        const ratingLabel = document.getElementById('ratingLabel');
+        const feedbackRatingInput = document.getElementById('feedbackRatingInput');
+        const feedbackError = document.getElementById('feedbackError');
+        const feedbackForm = document.getElementById('feedbackForm');
+        const feedbackFormArea = document.getElementById('feedbackFormArea');
+        const feedbackSuccess = document.getElementById('feedbackSuccess');
+
+        const ratingLabels = {
+            1: '⭐ Poor',
+            2: '⭐⭐ Fair',
+            3: '⭐⭐⭐ Good',
+            4: '⭐⭐⭐⭐ Very Good',
+            5: '⭐⭐⭐⭐⭐ Excellent!'
+        };
+
+        // Star rating interaction
+        feedbackStars.forEach(star => {
+            star.addEventListener('click', function() {
+                feedbackRating = parseInt(this.dataset.rating);
+                feedbackRatingInput.value = feedbackRating;
+                feedbackError.classList.remove('show');
+
+                // Update star appearance
+                feedbackStars.forEach(s => {
+                    const starRating = parseInt(s.dataset.rating);
+                    if (starRating <= feedbackRating) {
+                        s.classList.add('active');
+                    } else {
+                        s.classList.remove('active');
+                    }
+                });
+
+                // Update rating text
+                ratingLabel.textContent = ratingLabels[feedbackRating];
+            });
+
+            star.addEventListener('mouseenter', function() {
+                const hoverRating = parseInt(this.dataset.rating);
+                feedbackStars.forEach(s => {
+                    const starRating = parseInt(s.dataset.rating);
+                    if (starRating <= hoverRating) {
+                        s.style.color = '#FFD700';
+                    } else {
+                        s.style.color = '#ddd';
+                    }
+                });
+            });
+        });
+
+        document.getElementById('feedbackStarRating').addEventListener('mouseleave', function() {
+            feedbackStars.forEach(s => {
+                const starRating = parseInt(s.dataset.rating);
+                if (starRating <= feedbackRating) {
+                    s.style.color = '#FFD700';
+                } else {
+                    s.style.color = '#ddd';
+                }
+            });
+        });
+
+        // Form submission
+        feedbackForm.addEventListener('submit', function(e) {
+            if (feedbackRating === 0) {
+                e.preventDefault();
+                feedbackError.classList.add('show');
+                return false;
+            }
+
+            // Add user info and timestamp
+            document.getElementById('feedbackUserName').value = userData.name || 'Anonymous';
+            document.getElementById('feedbackUserLevel').value = userData.level || 'Unknown';
+            document.getElementById('feedbackTimestamp').value = new Date().toLocaleString();
+
+            // Show success message after a short delay (form will submit)
+            setTimeout(() => {
+                feedbackFormArea.style.display = 'none';
+                feedbackSuccess.classList.add('show');
+            }, 100);
+        });
+
+        // Initialize
+        loadGroupData();
+        loadMessages();
+    </script>
+</body>
+</html>

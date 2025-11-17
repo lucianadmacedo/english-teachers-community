@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Profile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #FFD166 0%, #FFEFD5 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #003D5C;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .level-badge {
+            background: linear-gradient(135deg, #4BA7A8 0%, #5DBEC0 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #4BA7A8;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #FF8E53 0%, #FFA866 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 142, 83, 0.4);
+            margin-top: 10px;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 142, 83, 0.6);
+        }
+
+        .submit-button:active {
+            transform: translateY(0);
+        }
+
+        .info-text {
+            background: #FFF4E0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="pageTitle">Complete Your Profile</h1>
+        <div class="level-badge" id="levelBadge">Level: --</div>
+
+        <div class="info-text" id="infoText">
+            You'll be assigned to a small study group (maximum 5 people) with others at your level.
+            Let's get to know you better!
+        </div>
+
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="name">Name *</label>
+                <input type="text" id="name" name="name" required placeholder="How should we call you?">
+            </div>
+
+            <div class="form-group">
+                <label for="goals" id="goalsLabel">What are your English learning goals? *</label>
+                <textarea id="goals" name="goals" required placeholder="Share what you hope to achieve in this study group..." id="goalsPlaceholder"></textarea>
+            </div>
+
+            <button type="submit" class="submit-button" id="submitButton">Join My Study Group</button>
+        </form>
+    </div>
+
+    <script>
+        // Get level from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const level = urlParams.get('level');
+
+        // Check if user is a mentor
+        const isMentor = level === 'C1-C2';
+
+        if (level) {
+            document.getElementById('levelBadge').textContent = 'Level: ' + level;
+        }
+
+        // Customize content for mentors vs learners
+        if (isMentor) {
+            document.getElementById('pageTitle').textContent = 'Good Job! You\'ve Been Selected to Be a Mentor!';
+            document.getElementById('infoText').innerHTML = `
+                <strong>Congratulations!</strong> As a C1-C2 level English speaker, you'll guide and support
+                a small group of fellow teachers. Your experience and skills will help others grow in their
+                English learning journey. Let's set up your mentor profile!
+            `;
+            document.getElementById('goalsLabel').textContent = 'How would you like to help your peers? *';
+            document.getElementById('goals').placeholder = 'Share how you plan to support and guide your study group...';
+            document.getElementById('submitButton').textContent = 'Become a Mentor';
+        }
+
+        document.getElementById('registrationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = {
+                name: document.getElementById('name').value,
+                goals: document.getElementById('goals').value,
+                level: level
+            };
+
+            // Get existing user data
+            const userDataStr = localStorage.getItem('userData');
+            const userData = userDataStr ? JSON.parse(userDataStr) : {};
+
+            // Merge form data with user data
+            const completeUserData = {
+                ...userData,
+                ...formData
+            };
+
+            localStorage.setItem('userData', JSON.stringify(completeUserData));
+
+            // Assign to group and redirect
+            assignToGroup(completeUserData);
+        });
+
+        function assignToGroup(userData) {
+            // Get all groups from localStorage
+            const groupsStr = localStorage.getItem('groups');
+            const groups = groupsStr ? JSON.parse(groupsStr) : [];
+
+            let assignedGroup = null;
+
+            // Check if user is C1-C2 (will be a mentor)
+            const isMentor = userData.level === 'C1-C2';
+
+            if (isMentor) {
+                // Find a group that needs a mentor
+                assignedGroup = groups.find(g =>
+                    g.level !== 'C1-C2' &&
+                    !g.mentor &&
+                    g.members.length < 5
+                );
+
+                // If no group needs a mentor, assign to any non-full group
+                if (!assignedGroup) {
+                    assignedGroup = groups.find(g =>
+                        g.level !== 'C1-C2' &&
+                        g.members.length < 5
+                    );
+                }
+
+                if (assignedGroup) {
+                    assignedGroup.mentor = {
+                        userId: userData.userId,
+                        name: userData.name
+                    };
+                }
+            } else {
+                // Regular learner - find group of same level with space
+                assignedGroup = groups.find(g =>
+                    g.level === userData.level &&
+                    g.members.length < 5
+                );
+            }
+
+            // If no suitable group found, create new one
+            if (!assignedGroup) {
+                assignedGroup = {
+                    groupId: 'group_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    level: userData.level,
+                    members: [],
+                    mentor: isMentor ? {
+                        userId: userData.userId,
+                        name: userData.name
+                    } : null,
+                    createdAt: new Date().toISOString()
+                };
+                groups.push(assignedGroup);
+            }
+
+            // Add user to group members (if not already mentor)
+            if (!isMentor || !assignedGroup.mentor || assignedGroup.mentor.userId !== userData.userId) {
+                assignedGroup.members.push({
+                    userId: userData.userId,
+                    name: userData.name,
+                    goals: userData.goals,
+                    joinedAt: new Date().toISOString()
+                });
+            }
+
+            // Save updated groups
+            localStorage.setItem('groups', JSON.stringify(groups));
+
+            // Save group assignment to user data
+            userData.groupId = assignedGroup.groupId;
+            userData.isMentor = isMentor;
+            localStorage.setItem('userData', JSON.stringify(userData));
+
+            // Redirect to appropriate dashboard
+            if (isMentor) {
+                window.location.href = 'mentor-dashboard.html';
+            } else {
+                window.location.href = 'learner-dashboard.html';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Learning Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4BA7A8 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .level-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .welcome-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .welcome-card h2 {
+            color: #4BA7A8;
+            margin-bottom: 15px;
+        }
+
+        .welcome-card p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h3::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #4BA7A8 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .todo-item {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border-left: 4px solid #4BA7A8;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .todo-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .todo-item.completed {
+            opacity: 0.6;
+            border-left-color: #4caf50;
+        }
+
+        .todo-item h4 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .todo-item p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .checkbox-container label {
+            cursor: pointer;
+            color: #4BA7A8;
+            font-weight: 600;
+        }
+
+        .member-list {
+            list-style: none;
+        }
+
+        .member-item {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .member-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #4BA7A8;
+            background: white;
+        }
+
+        .member-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .mentor-badge-small {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #333;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .member-info h4 {
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .member-info p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #4BA7A8 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4BA7A8 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 8px;
+            color: #4BA7A8;
+            font-weight: 600;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>Welcome, <span id="userName">Learner</span>!</h1>
+            <span class="level-badge" id="levelBadge">Level</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="welcome-card">
+            <h2>Your English Learning Journey</h2>
+            <p>
+                Welcome to your study group! You've been matched with fellow English teachers at a similar level.
+                Complete the tasks below to improve your English skills, and don't hesitate to reach out to your group mentor or peers for support.
+            </p>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>My Learning Tasks</h3>
+                <div id="learnerTasks"></div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progressText">0% Complete</div>
+            </div>
+
+            <div class="card">
+                <h3>My Study Group</h3>
+                <div id="groupMembers"></div>
+                <button class="btn" onclick="viewGroup()" style="width: 100%; margin-top: 15px;">
+                    View Full Group Page
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Resources & Support</h3>
+            <p style="color: #666; margin-bottom: 15px;">Access learning materials and ask for help</p>
+            <button class="btn" onclick="alert('Coming soon!')">Access Resources</button>
+            <button class="btn" onclick="alert('Coming soon!')" style="margin-left: 10px; background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);">Ask for Help</button>
+        </div>
+    </div>
+
+    <script>
+        // Avatar list
+        const avatars = [
+            'avatar-blue-hair.png',
+            'avatar-colorful-hair.png',
+            'avatar-female-teacher.png',
+            'avatar-green-hair.png',
+            'avatar-orange.png',
+            'avatar-pink-hair.png',
+            'avatar-purple-hair.png',
+            'avatar-teacher-scarf.png',
+            'avatar-yellow-hair.png',
+            'avatar_gender-neutral.png',
+            'avatar_purple-hair.png',
+            'blue-avatar.png'
+        ];
+
+        // Get or assign avatar for a user
+        function getAvatar(userId) {
+            const avatarMap = JSON.parse(localStorage.getItem('userAvatars') || '{}');
+
+            if (!avatarMap[userId]) {
+                // Assign random avatar
+                avatarMap[userId] = avatars[Math.floor(Math.random() * avatars.length)];
+                localStorage.setItem('userAvatars', JSON.stringify(avatarMap));
+            }
+
+            return avatarMap[userId];
+        }
+
+        // Load user data
+        const userDataStr = localStorage.getItem('userData');
+        const userData = userDataStr ? JSON.parse(userDataStr) : {};
+
+        if (userData.name) {
+            document.getElementById('userName').textContent = userData.name;
+        }
+
+        if (userData.level) {
+            document.getElementById('levelBadge').textContent = userData.level;
+        }
+
+        // Learning tasks based on level
+        const learningTasks = {
+            'A1-A2': [
+                {
+                    id: 'task1',
+                    title: 'Practice: Basic Classroom English',
+                    description: 'Learn 30 essential phrases for giving instructions and managing your classroom'
+                },
+                {
+                    id: 'task2',
+                    title: 'Grammar: Simple Tenses Review',
+                    description: 'Practice present simple, past simple, and future with "going to"'
+                },
+                {
+                    id: 'task3',
+                    title: 'Listening: Watch an English Lesson Video',
+                    description: 'Watch a beginner-level teaching video and note new vocabulary (10 minutes)'
+                },
+                {
+                    id: 'task4',
+                    title: 'Speaking: Introduce Yourself',
+                    description: 'Practice a 2-minute introduction about your teaching background'
+                },
+                {
+                    id: 'task5',
+                    title: 'Writing: My Classroom',
+                    description: 'Write 5 sentences describing your classroom or students'
+                }
+            ],
+            'B1-B2': [
+                {
+                    id: 'task1',
+                    title: 'Grammar: Intermediate Structures',
+                    description: 'Review present perfect, conditionals, and passive voice in teaching contexts'
+                },
+                {
+                    id: 'task2',
+                    title: 'Vocabulary: Teaching Terminology',
+                    description: 'Learn 50 professional terms related to education and pedagogy'
+                },
+                {
+                    id: 'task3',
+                    title: 'Reading: Teaching Methodology Article',
+                    description: 'Read a short article about effective teaching strategies (15 minutes)'
+                },
+                {
+                    id: 'task4',
+                    title: 'Speaking: Mini Lesson Presentation',
+                    description: 'Prepare and present a 5-minute lesson plan to your group'
+                },
+                {
+                    id: 'task5',
+                    title: 'Writing: Reflective Practice',
+                    description: 'Write about a recent teaching experience and what you learned (150 words)'
+                }
+            ]
+        };
+
+        const currentLevelTasks = learningTasks[userData.level] || learningTasks['A1-A2'];
+
+        // Load task completion status
+        function loadTaskStatus() {
+            const tasksStr = localStorage.getItem('learnerTasksCompleted');
+            return tasksStr ? JSON.parse(tasksStr) : {};
+        }
+
+        function saveTaskStatus(taskStatus) {
+            localStorage.setItem('learnerTasksCompleted', JSON.stringify(taskStatus));
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('learnerTasks');
+            const taskStatus = loadTaskStatus();
+
+            container.innerHTML = currentLevelTasks.map(task => `
+                <div class="todo-item ${taskStatus[task.id] ? 'completed' : ''}">
+                    <h4>${task.title}</h4>
+                    <p>${task.description}</p>
+                    <div class="checkbox-container">
+                        <input type="checkbox"
+                               id="${task.id}"
+                               ${taskStatus[task.id] ? 'checked' : ''}
+                               onchange="toggleTask('${task.id}')">
+                        <label for="${task.id}">Mark as complete</label>
+                    </div>
+                </div>
+            `).join('');
+
+            updateProgress();
+        }
+
+        function toggleTask(taskId) {
+            const taskStatus = loadTaskStatus();
+            taskStatus[taskId] = !taskStatus[taskId];
+            saveTaskStatus(taskStatus);
+            renderTasks();
+        }
+
+        function updateProgress() {
+            const taskStatus = loadTaskStatus();
+            const completed = Object.values(taskStatus).filter(Boolean).length;
+            const total = currentLevelTasks.length;
+            const percentage = Math.round((completed / total) * 100);
+
+            document.getElementById('progressBar').style.width = percentage + '%';
+            document.getElementById('progressText').textContent = percentage + '% Complete';
+        }
+
+        function loadGroupMembers() {
+            const groupsStr = localStorage.getItem('groups');
+            const groups = groupsStr ? JSON.parse(groupsStr) : [];
+
+            const userGroup = groups.find(g => g.groupId === userData.groupId);
+
+            const container = document.getElementById('groupMembers');
+
+            if (!userGroup) {
+                container.innerHTML = '<div class="empty-state">Loading group information...</div>';
+                return;
+            }
+
+            let html = '';
+
+            // Show mentor first
+            if (userGroup.mentor) {
+                html += `
+                    <div class="member-item">
+                        <div class="member-avatar">
+                            <img src="${getAvatar(userGroup.mentor.userId)}" alt="${userGroup.mentor.name}">
+                        </div>
+                        <div class="member-info">
+                            <h4>${userGroup.mentor.name} <span class="mentor-badge-small">MENTOR</span></h4>
+                            <p>Your group mentor</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Show other members
+            if (userGroup.members && userGroup.members.length > 0) {
+                html += userGroup.members
+                    .filter(m => m.userId !== userData.userId)
+                    .map(member => `
+                        <div class="member-item">
+                            <div class="member-avatar">
+                                <img src="${getAvatar(member.userId)}" alt="${member.name}">
+                            </div>
+                            <div class="member-info">
+                                <h4>${member.name}</h4>
+                                <p>Fellow learner</p>
+                            </div>
+                        </div>
+                    `).join('');
+            }
+
+            if (html === '') {
+                html = '<div class="empty-state">Waiting for group members to join...</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function viewGroup() {
+            window.location.href = 'group.html';
+        }
+
+        // Initialize
+        renderTasks();
+        loadGroupMembers();
+    </script>
+</body>
+</html>
