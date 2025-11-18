@@ -797,7 +797,16 @@
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
 
-            if (!message) return;
+            if (!message) {
+                console.log('Empty message, not sending');
+                return;
+            }
+
+            if (!userData.groupId) {
+                console.error('No groupId found in userData:', userData);
+                alert('Error: You are not assigned to a group yet. Please go back and register.');
+                return;
+            }
 
             const messageData = {
                 userId: userData.userId,
@@ -807,17 +816,26 @@
                 groupId: userData.groupId
             };
 
-            // Save to Firebase Realtime Database
-            database.ref('messages/' + userData.groupId).push(messageData);
+            console.log('Sending message:', messageData);
 
-            // Clear input
-            input.value = '';
+            // Save to Firebase Realtime Database
+            database.ref('messages/' + userData.groupId).push(messageData)
+                .then(() => {
+                    console.log('Message sent successfully!');
+                    // Clear input
+                    input.value = '';
+                })
+                .catch((error) => {
+                    console.error('Error sending message:', error);
+                    alert('Error sending message: ' + error.message);
+                });
         }
 
         function loadMessages() {
             const messagesContainer = document.getElementById('chatMessages');
 
             if (!userData.groupId) {
+                console.warn('No groupId found, cannot load messages');
                 messagesContainer.innerHTML = `
                     <div class="chat-empty">
                         <div class="chat-empty-icon">💬</div>
@@ -827,8 +845,11 @@
                 return;
             }
 
+            console.log('Setting up Firebase listener for group:', userData.groupId);
+
             // Listen for messages in real-time
             database.ref('messages/' + userData.groupId).on('value', (snapshot) => {
+                console.log('Firebase data received:', snapshot.val());
                 const messagesData = snapshot.val();
 
                 if (!messagesData) {
@@ -843,6 +864,7 @@
 
                 // Convert messages object to array and sort by timestamp
                 const messages = Object.values(messagesData).sort((a, b) => a.timestamp - b.timestamp);
+                console.log('Displaying', messages.length, 'messages');
 
                 // Display messages
                 let html = '';
@@ -869,6 +891,14 @@
 
                 messagesContainer.innerHTML = html;
                 scrollToBottom();
+            }, (error) => {
+                console.error('Firebase error:', error);
+                messagesContainer.innerHTML = `
+                    <div class="chat-empty">
+                        <div class="chat-empty-icon">⚠️</div>
+                        <p>Error loading messages: ${error.message}</p>
+                    </div>
+                `;
             });
         }
 
