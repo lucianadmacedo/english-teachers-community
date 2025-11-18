@@ -711,31 +711,42 @@
         const userDataStr = localStorage.getItem('userData');
         const userData = userDataStr ? JSON.parse(userDataStr) : {};
 
-        function loadGroupData() {
-            const groupsStr = localStorage.getItem('groups');
-            const groups = groupsStr ? JSON.parse(groupsStr) : [];
-
-            const userGroup = groups.find(g => g.groupId === userData.groupId);
-
-            if (!userGroup) {
+        async function loadGroupData() {
+            if (!userData.groupId) {
                 document.getElementById('groupTitle').textContent = 'Group Not Found';
                 document.getElementById('groupDescription').textContent = 'You are not assigned to a group yet.';
                 return;
             }
 
-            // Update group title and info
-            document.getElementById('groupTitle').textContent = `${userGroup.level} Study Group`;
-            document.getElementById('groupDescription').textContent =
-                `Welcome to your collaborative learning space! This is where you and your fellow teachers at the ${userGroup.level} level can learn together, share experiences, and support each other's growth.`;
+            try {
+                // Load group from Firebase
+                const groupSnapshot = await database.ref('groups/' + userData.groupId).once('value');
+                const userGroup = groupSnapshot.val();
 
-            // Update stats
-            const totalMembers = (userGroup.members?.length || 0) + (userGroup.mentor ? 1 : 0);
-            document.getElementById('memberCount').textContent = totalMembers;
-            document.getElementById('levelDisplay').textContent = userGroup.level;
-            document.getElementById('hasMentor').textContent = userGroup.mentor ? 'Yes' : 'No';
+                if (!userGroup) {
+                    document.getElementById('groupTitle').textContent = 'Group Not Found';
+                    document.getElementById('groupDescription').textContent = 'You are not assigned to a group yet.';
+                    return;
+                }
 
-            // Load members
-            loadGroupMembers(userGroup);
+                // Update group title and info
+                document.getElementById('groupTitle').textContent = `${userGroup.level} Study Group`;
+                document.getElementById('groupDescription').textContent =
+                    `Welcome to your collaborative learning space! This is where you and your fellow teachers at the ${userGroup.level} level can learn together, share experiences, and support each other's growth.`;
+
+                // Update stats
+                const totalMembers = (userGroup.members?.length || 0) + (userGroup.mentor ? 1 : 0);
+                document.getElementById('memberCount').textContent = totalMembers;
+                document.getElementById('levelDisplay').textContent = userGroup.level;
+                document.getElementById('hasMentor').textContent = userGroup.mentor ? 'Yes' : 'No';
+
+                // Load members
+                loadGroupMembers(userGroup);
+            } catch (error) {
+                console.error('Error loading group:', error);
+                document.getElementById('groupTitle').textContent = 'Error Loading Group';
+                document.getElementById('groupDescription').textContent = 'Could not load group data: ' + error.message;
+            }
         }
 
         function loadGroupMembers(userGroup) {

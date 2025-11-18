@@ -138,6 +138,27 @@
         </form>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAkdPFmUzNTOU_92RtEV52r-4dkYgQaUPI",
+            authDomain: "english-teachers-community.firebaseapp.com",
+            databaseURL: "https://english-teachers-community-default-rtdb.firebaseio.com",
+            projectId: "english-teachers-community",
+            storageBucket: "english-teachers-community.firebasestorage.app",
+            messagingSenderId: "675422575948",
+            appId: "1:675422575948:web:1750c101e5ef66b34683e9"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+    </script>
+
     <script>
         // Get level from URL parameter
         const urlParams = new URLSearchParams(window.location.search);
@@ -188,84 +209,116 @@
             assignToGroup(completeUserData);
         });
 
-        function assignToGroup(userData) {
-            // Get all groups from localStorage
-            const groupsStr = localStorage.getItem('groups');
-            const groups = groupsStr ? JSON.parse(groupsStr) : [];
-
-            let assignedGroup = null;
-
-            // Check if user is C1-C2 (will be a mentor)
+        async function assignToGroup(userData) {
             const isMentor = userData.level === 'C1-C2';
 
-            if (isMentor) {
-                // Find a group that needs a mentor
-                assignedGroup = groups.find(g =>
-                    g.level !== 'C1-C2' &&
-                    !g.mentor &&
-                    g.members.length < 5
-                );
+            try {
+                // Get all groups from Firebase
+                const groupsSnapshot = await database.ref('groups').once('value');
+                const groupsData = groupsSnapshot.val() || {};
+                const groups = Object.values(groupsData);
 
-                // If no group needs a mentor, assign to any non-full group
-                if (!assignedGroup) {
+                console.log('Current groups:', groups);
+
+                let assignedGroup = null;
+                let groupKey = null;
+
+                if (isMentor) {
+                    // Find a group that needs a mentor
                     assignedGroup = groups.find(g =>
                         g.level !== 'C1-C2' &&
-                        g.members.length < 5
+                        !g.mentor &&
+                        g.members && g.members.length < 5
                     );
+
+                    // If no group needs a mentor, assign to any non-full group
+                    if (!assignedGroup) {
+                        assignedGroup = groups.find(g =>
+                            g.level !== 'C1-C2' &&
+                            g.members && g.members.length < 5
+                        );
+                    }
+
+                    if (assignedGroup) {
+                        groupKey = assignedGroup.groupId;
+                        assignedGroup.mentor = {
+                            userId: userData.userId,
+                            name: userData.name
+                        };
+                    }
+                } else {
+                    // Regular learner - find group of same level with space
+                    assignedGroup = groups.find(g =>
+                        g.level === userData.level &&
+                        g.members && g.members.length < 5
+                    );
+
+                    if (assignedGroup) {
+                        groupKey = assignedGroup.groupId;
+                    }
                 }
 
-                if (assignedGroup) {
-                    assignedGroup.mentor = {
-                        userId: userData.userId,
-                        name: userData.name
+                // If no suitable group found, create new one
+                if (!assignedGroup) {
+                    groupKey = 'group_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    assignedGroup = {
+                        groupId: groupKey,
+                        level: userData.level,
+                        members: [],
+                        mentor: isMentor ? {
+                            userId: userData.userId,
+                            name: userData.name
+                        } : null,
+                        createdAt: new Date().toISOString()
                     };
                 }
-            } else {
-                // Regular learner - find group of same level with space
-                assignedGroup = groups.find(g =>
-                    g.level === userData.level &&
-                    g.members.length < 5
-                );
-            }
 
-            // If no suitable group found, create new one
-            if (!assignedGroup) {
-                assignedGroup = {
-                    groupId: 'group_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                    level: userData.level,
-                    members: [],
-                    mentor: isMentor ? {
+                // Initialize members array if it doesn't exist
+                if (!assignedGroup.members) {
+                    assignedGroup.members = [];
+                }
+
+                // Add user to group members (if not already added)
+                const alreadyMember = assignedGroup.members.some(m => m.userId === userData.userId);
+                if (!alreadyMember) {
+                    assignedGroup.members.push({
                         userId: userData.userId,
-                        name: userData.name
-                    } : null,
-                    createdAt: new Date().toISOString()
-                };
-                groups.push(assignedGroup);
-            }
+                        name: userData.name,
+                        goals: userData.goals,
+                        joinedAt: new Date().toISOString()
+                    });
+                }
 
-            // Add user to group members (if not already mentor)
-            if (!isMentor || !assignedGroup.mentor || assignedGroup.mentor.userId !== userData.userId) {
-                assignedGroup.members.push({
+                // Save group to Firebase
+                await database.ref('groups/' + groupKey).set(assignedGroup);
+
+                console.log('Assigned to group:', assignedGroup);
+
+                // Save group assignment to user data (localStorage for this user)
+                userData.groupId = assignedGroup.groupId;
+                userData.isMentor = isMentor;
+                localStorage.setItem('userData', JSON.stringify(userData));
+
+                // Also save user to Firebase for tracking
+                await database.ref('users/' + userData.userId).set({
                     userId: userData.userId,
                     name: userData.name,
-                    goals: userData.goals,
+                    level: userData.level,
+                    groupId: assignedGroup.groupId,
+                    isMentor: isMentor,
                     joinedAt: new Date().toISOString()
                 });
-            }
 
-            // Save updated groups
-            localStorage.setItem('groups', JSON.stringify(groups));
+                // Redirect to appropriate dashboard
+                if (isMentor) {
+                    window.location.href = 'mentor-dashboard.html';
+                } else {
+                    window.location.href = 'learner-dashboard.html';
+                }
 
-            // Save group assignment to user data
-            userData.groupId = assignedGroup.groupId;
-            userData.isMentor = isMentor;
-            localStorage.setItem('userData', JSON.stringify(userData));
-
-            // Redirect to appropriate dashboard
-            if (isMentor) {
-                window.location.href = 'mentor-dashboard.html';
-            } else {
-                window.location.href = 'learner-dashboard.html';
+            } catch (error) {
+                console.error('Error assigning to group:', error);
+                alert('Error joining group: ' + error.message);
             }
         }
     </script>
