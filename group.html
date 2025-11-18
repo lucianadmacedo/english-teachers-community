@@ -658,7 +658,26 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
     <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAkdPFmUzNTOU_92RtEV52r-4dkYgQaUPI",
+            authDomain: "english-teachers-community.firebaseapp.com",
+            databaseURL: "https://english-teachers-community-default-rtdb.firebaseio.com",
+            projectId: "english-teachers-community",
+            storageBucket: "english-teachers-community.firebasestorage.app",
+            messagingSenderId: "675422575948",
+            appId: "1:675422575948:web:1750c101e5ef66b34683e9"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
         // Avatar list
         const avatars = [
             'avatar-blue-hair.png',
@@ -773,7 +792,7 @@
             }
         }
 
-        // Chat functionality
+        // Chat functionality with Firebase
         function sendMessage() {
             const input = document.getElementById('chatInput');
             const message = input.value.trim();
@@ -781,34 +800,24 @@
             if (!message) return;
 
             const messageData = {
-                messageId: 'msg_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                 userId: userData.userId,
                 userName: userData.name,
                 text: message,
-                timestamp: new Date().toISOString(),
+                timestamp: Date.now(),
                 groupId: userData.groupId
             };
 
-            // Save to localStorage
-            const messages = JSON.parse(localStorage.getItem('groupMessages_' + userData.groupId) || '[]');
-            messages.push(messageData);
-            localStorage.setItem('groupMessages_' + userData.groupId, JSON.stringify(messages));
+            // Save to Firebase Realtime Database
+            database.ref('messages/' + userData.groupId).push(messageData);
 
             // Clear input
             input.value = '';
-
-            // Reload messages
-            loadMessages();
-
-            // Scroll to bottom
-            scrollToBottom();
         }
 
         function loadMessages() {
             const messagesContainer = document.getElementById('chatMessages');
-            const messages = JSON.parse(localStorage.getItem('groupMessages_' + userData.groupId) || '[]');
 
-            if (messages.length === 0) {
+            if (!userData.groupId) {
                 messagesContainer.innerHTML = `
                     <div class="chat-empty">
                         <div class="chat-empty-icon">💬</div>
@@ -818,30 +827,49 @@
                 return;
             }
 
-            // Display messages
-            let html = '';
-            messages.forEach(msg => {
-                const isOwnMessage = msg.userId === userData.userId;
-                const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const avatar = getAvatar(msg.userId);
+            // Listen for messages in real-time
+            database.ref('messages/' + userData.groupId).on('value', (snapshot) => {
+                const messagesData = snapshot.val();
 
-                html += `
-                    <div class="chat-message ${isOwnMessage ? 'own-message' : ''}">
-                        <div class="message-header">
-                            ${!isOwnMessage ? `
-                                <div class="message-avatar">
-                                    <img src="${avatar}" alt="${msg.userName}">
-                                </div>
-                            ` : ''}
-                            <span class="message-author">${isOwnMessage ? 'You' : msg.userName}</span>
-                            <span class="message-time">${time}</span>
+                if (!messagesData) {
+                    messagesContainer.innerHTML = `
+                        <div class="chat-empty">
+                            <div class="chat-empty-icon">💬</div>
+                            <p>No messages yet. Be the first to say hello!</p>
                         </div>
-                        <div class="message-text">${escapeHtml(msg.text)}</div>
-                    </div>
-                `;
-            });
+                    `;
+                    return;
+                }
 
-            messagesContainer.innerHTML = html;
+                // Convert messages object to array and sort by timestamp
+                const messages = Object.values(messagesData).sort((a, b) => a.timestamp - b.timestamp);
+
+                // Display messages
+                let html = '';
+                messages.forEach(msg => {
+                    const isOwnMessage = msg.userId === userData.userId;
+                    const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const avatar = getAvatar(msg.userId);
+
+                    html += `
+                        <div class="chat-message ${isOwnMessage ? 'own-message' : ''}">
+                            <div class="message-header">
+                                ${!isOwnMessage ? `
+                                    <div class="message-avatar">
+                                        <img src="${avatar}" alt="${msg.userName}">
+                                    </div>
+                                ` : ''}
+                                <span class="message-author">${isOwnMessage ? 'You' : msg.userName}</span>
+                                <span class="message-time">${time}</span>
+                            </div>
+                            <div class="message-text">${escapeHtml(msg.text)}</div>
+                        </div>
+                    `;
+                });
+
+                messagesContainer.innerHTML = html;
+                scrollToBottom();
+            });
         }
 
         function scrollToBottom() {
@@ -854,9 +882,6 @@
             div.textContent = text;
             return div.innerHTML;
         }
-
-        // Auto-refresh messages every 3 seconds for "live" chat
-        setInterval(loadMessages, 3000);
 
         // Feedback functionality
         let feedbackRating = 0;
