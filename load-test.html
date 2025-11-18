@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Load Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .stats {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .stat {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+        .messages {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+        }
+        .message {
+            padding: 5px;
+            margin: 5px 0;
+            background: #e3f2fd;
+            border-radius: 5px;
+        }
+        .latency {
+            color: green;
+        }
+        .latency.slow {
+            color: orange;
+        }
+        .latency.very-slow {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Firebase Load Test - Chat Simulation</h1>
+
+    <div class="controls">
+        <button onclick="sendBulkMessages(10)">Send 10 Messages</button>
+        <button onclick="sendBulkMessages(50)">Send 50 Messages</button>
+        <button onclick="sendBulkMessages(100)">Send 100 Messages</button>
+        <button onclick="clearMessages()">Clear All</button>
+    </div>
+
+    <div class="stats">
+        <div class="stat">Total Messages Sent: <strong id="totalSent">0</strong></div>
+        <div class="stat">Total Messages Received: <strong id="totalReceived">0</strong></div>
+        <div class="stat">Average Latency: <strong id="avgLatency">0</strong> ms</div>
+        <div class="stat">Max Latency: <strong id="maxLatency">0</strong> ms</div>
+        <div class="stat">Connection Status: <strong id="connectionStatus">Connecting...</strong></div>
+    </div>
+
+    <h3>Messages (Real-time):</h3>
+    <div class="messages" id="messages"></div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAkdPFmUzNTOU_92RtEV52r-4dkYgQaUPI",
+            authDomain: "english-teachers-community.firebaseapp.com",
+            databaseURL: "https://english-teachers-community-default-rtdb.firebaseio.com",
+            projectId: "english-teachers-community",
+            storageBucket: "english-teachers-community.firebasestorage.app",
+            messagingSenderId: "675422575948",
+            appId: "1:675422575948:web:1750c101e5ef66b34683e9"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let totalSent = 0;
+        let totalReceived = 0;
+        let latencies = [];
+        const sentTimestamps = new Map();
+
+        // Monitor connection status
+        database.ref('.info/connected').on('value', (snapshot) => {
+            const status = snapshot.val() ? 'Connected ✓' : 'Disconnected ✗';
+            document.getElementById('connectionStatus').textContent = status;
+            document.getElementById('connectionStatus').style.color = snapshot.val() ? 'green' : 'red';
+        });
+
+        // Listen for messages
+        database.ref('load-test-messages').on('child_added', (snapshot) => {
+            const msg = snapshot.val();
+            const messageId = snapshot.key;
+
+            // Calculate latency if we sent this message
+            if (sentTimestamps.has(messageId)) {
+                const sentTime = sentTimestamps.get(messageId);
+                const latency = Date.now() - sentTime;
+                latencies.push(latency);
+
+                // Update stats
+                totalReceived++;
+                updateStats(latency);
+
+                // Display message with latency
+                displayMessage(msg, latency);
+            }
+        });
+
+        function sendBulkMessages(count) {
+            console.log(`Sending ${count} messages...`);
+
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => {
+                    const messageRef = database.ref('load-test-messages').push();
+                    const messageId = messageRef.key;
+                    const timestamp = Date.now();
+
+                    sentTimestamps.set(messageId, timestamp);
+
+                    messageRef.set({
+                        text: `Test message #${totalSent + 1}`,
+                        timestamp: timestamp,
+                        userId: 'load-test-user'
+                    });
+
+                    totalSent++;
+                    document.getElementById('totalSent').textContent = totalSent;
+                }, i * 50); // Stagger sends by 50ms to simulate real users
+            }
+        }
+
+        function updateStats(latency) {
+            document.getElementById('totalReceived').textContent = totalReceived;
+
+            // Average latency
+            const avg = latencies.reduce((a, b) => a + b, 0) / latencies.length;
+            document.getElementById('avgLatency').textContent = Math.round(avg);
+
+            // Max latency
+            const max = Math.max(...latencies);
+            document.getElementById('maxLatency').textContent = max;
+
+            // Color code max latency
+            const maxLatencyEl = document.getElementById('maxLatency');
+            if (max < 300) {
+                maxLatencyEl.style.color = 'green';
+            } else if (max < 1000) {
+                maxLatencyEl.style.color = 'orange';
+            } else {
+                maxLatencyEl.style.color = 'red';
+            }
+        }
+
+        function displayMessage(msg, latency) {
+            const messagesDiv = document.getElementById('messages');
+            const messageEl = document.createElement('div');
+            messageEl.className = 'message';
+
+            let latencyClass = 'latency';
+            if (latency > 1000) latencyClass += ' very-slow';
+            else if (latency > 300) latencyClass += ' slow';
+
+            messageEl.innerHTML = `
+                ${msg.text}
+                <span class="${latencyClass}">(${latency}ms)</span>
+            `;
+
+            messagesDiv.appendChild(messageEl);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function clearMessages() {
+            if (confirm('Clear all test messages from Firebase?')) {
+                database.ref('load-test-messages').remove();
+                document.getElementById('messages').innerHTML = '';
+                totalSent = 0;
+                totalReceived = 0;
+                latencies = [];
+                sentTimestamps.clear();
+                updateStats(0);
+            }
+        }
+    </script>
+</body>
+</html>
