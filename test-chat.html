@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Chat Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        #messages {
+            border: 1px solid #ccc;
+            padding: 20px;
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+        }
+        .message {
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+        }
+        input {
+            width: 70%;
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .status {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>Firebase Chat Test</h1>
+    <div id="status" class="status">Connecting to Firebase...</div>
+
+    <div id="messages"></div>
+
+    <input type="text" id="messageInput" placeholder="Type a message...">
+    <button onclick="sendMessage()">Send</button>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAkdPFmUzNTOU_92RtEV52r-4dkYgQaUPI",
+            authDomain: "english-teachers-community.firebaseapp.com",
+            databaseURL: "https://english-teachers-community-default-rtdb.firebaseio.com",
+            projectId: "english-teachers-community",
+            storageBucket: "english-teachers-community.firebasestorage.app",
+            messagingSenderId: "675422575948",
+            appId: "1:675422575948:web:1750c101e5ef66b34683e9"
+        };
+
+        let database;
+        const statusDiv = document.getElementById('status');
+
+        // Initialize Firebase
+        try {
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            statusDiv.textContent = '✓ Connected to Firebase!';
+            statusDiv.className = 'status connected';
+
+            // Test connection
+            database.ref('.info/connected').on('value', (snapshot) => {
+                if (snapshot.val() === true) {
+                    console.log('Firebase connected!');
+                    loadMessages();
+                } else {
+                    console.log('Firebase not connected');
+                }
+            });
+        } catch (error) {
+            statusDiv.textContent = '✗ Error: ' + error.message;
+            statusDiv.className = 'status error';
+            console.error('Firebase init error:', error);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            const messageData = {
+                text: message,
+                timestamp: Date.now(),
+                sender: 'Test User'
+            };
+
+            try {
+                database.ref('test-messages').push(messageData);
+                input.value = '';
+                console.log('Message sent:', messageData);
+            } catch (error) {
+                alert('Error sending message: ' + error.message);
+                console.error('Send error:', error);
+            }
+        }
+
+        function loadMessages() {
+            database.ref('test-messages').on('value', (snapshot) => {
+                const messagesDiv = document.getElementById('messages');
+                const data = snapshot.val();
+
+                if (!data) {
+                    messagesDiv.innerHTML = '<p>No messages yet. Send one!</p>';
+                    return;
+                }
+
+                const messages = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+
+                let html = '';
+                messages.forEach(msg => {
+                    const time = new Date(msg.timestamp).toLocaleTimeString();
+                    html += `<div class="message"><strong>${msg.sender}</strong> (${time}): ${msg.text}</div>`;
+                });
+
+                messagesDiv.innerHTML = html;
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            });
+        }
+    </script>
+</body>
+</html>
