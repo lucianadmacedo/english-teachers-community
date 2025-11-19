@@ -231,21 +231,26 @@
                         g.members && g.members.length < 5
                     );
 
-                    // If no group needs a mentor, assign to any non-full group
+                    // If no group needs a mentor, try to join a mentor-only group
                     if (!assignedGroup) {
                         assignedGroup = groups.find(g =>
-                            g.level !== 'C1-C2' &&
+                            g.level === 'C1-C2' &&
                             g.members && g.members.length < 5
                         );
                     }
 
-                    if (assignedGroup) {
+                    if (assignedGroup && assignedGroup.level !== 'C1-C2') {
+                        // Assigning to a student group as mentor
                         groupKey = assignedGroup.groupId;
                         assignedGroup.mentor = {
                             userId: userData.userId,
                             name: userData.name
                         };
+                    } else if (assignedGroup && assignedGroup.level === 'C1-C2') {
+                        // Joining existing mentor-only group
+                        groupKey = assignedGroup.groupId;
                     }
+                    // If still no group found, will create mentor-only group below
                 } else {
                     // Regular learner - find group of same level with space
                     assignedGroup = groups.find(g =>
@@ -265,7 +270,7 @@
                         groupId: groupKey,
                         level: userData.level,
                         members: [],
-                        mentor: isMentor ? {
+                        mentor: (isMentor && userData.level !== 'C1-C2') ? {
                             userId: userData.userId,
                             name: userData.name
                         } : null,
